@@ -1,0 +1,9 @@
+README
+setup.py
+wmrevolution/__init__.py
+wmrevolution/wmcourses.py
+wmrevolution.egg-info/PKG-INFO
+wmrevolution.egg-info/SOURCES.txt
+wmrevolution.egg-info/dependency_links.txt
+wmrevolution.egg-info/requires.txt
+wmrevolution.egg-info/top_level.txt

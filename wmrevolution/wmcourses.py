@@ -14,8 +14,7 @@
 import requests
 from lxml import html
 from bs4 import BeautifulSoup
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+# from bson.objectid import ObjectId
 
 # dictionary used to get key field for each course
 key_dict = {
