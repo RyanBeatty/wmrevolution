@@ -15,7 +15,8 @@ Getting a list of all courses and course data is easy:
 ```python
 from wmrevolution import wmcourses
 
-# term_code is code for semester you wish to get course list for
+# term_code is code for semester you wish to get course list for.
+# '20151' corresponds to the Fall 2014 Semester
 # can be found be inspecting <https://courselist.wm.edu/>
 term_code = '20151'
 course_list = wmcourses.grab_courses(term_code)
