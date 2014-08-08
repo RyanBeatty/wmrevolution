@@ -1,17 +1,5 @@
 # -*- coding: <urf-8> -*-
 
-
-
-##########################################################################
-# wmcourselistscraper.py
-# written by: Ryan Beatty
-#
-# This is a python script that will scrape the William and Mary's open course list
-# for info and construct a dictionary for each course and print each dictionary
-# to standard output. Simple modifications can be made to upload each entry
-# to a database or write them to a file
-##########################################################################
-
 import requests
 import datetime
 from argparse import ArgumentParser
@@ -22,13 +10,22 @@ from .errors import BadRequestError
 
 COURSELIST_URL = u'https://courselist.wm.edu/courseinfo/searchresults'
 
-def grab_courses(term_code, target=None):
 
+def grab_courses(term_code, prettify=None):
     soup = BeautifulSoup(_grab_courselist_html(term_code))
     courses = _grab_raw_courses(soup)
-    if target:
-        courses = map(target, courses)
+    if prettify:
+        courses = map(prettify, courses)
     return courses
+
+
+def prettify(course):
+    course_time_key = u'MEET TIMES'
+    if course_time_key in course:
+        course_time = course[course_time_key]
+        course[course_time_key] = format_time(course_time)
+    return course
+
 
 def format_time(course_time):
 
@@ -43,7 +40,8 @@ def format_time(course_time):
         return u'-'.join(times)
     except ValueError:
         return course_time
- 
+
+
 def _grab_courselist_html(term_code):
     payload = {
         u"term_code": unicode(term_code),
@@ -60,8 +58,10 @@ def _grab_courselist_html(term_code):
         raise BadRequestError(u"can't access course list. check term code")
     return page.text
 
+
 def _grab_course_fields(soup):
     return [field.string.strip() for field in soup.find_all(u'th')]
+
 
 def _grab_raw_courses(soup):
     course_fields = _grab_course_fields(soup)
@@ -79,51 +79,3 @@ def _grab_raw_courses(soup):
         count += 1
 
     return courses
-
-# def grab_courses(term_code, target=None):
-
-#     soup = BeautifulSoup(_grab_courselist_html(term_code))
-#     courses = _grab_raw_courses(soup)
-#     if target:
-#         courses = map(target, courses)
-#     return courses
-
-# def _format_time(time):
-
-#     if time >= 1300:
-#         return _format(str(time - 1200)) + u"PM"
-#     elif time >= 1200:
-#         return _format(str(time)) + u"PM"
-#     else:
-#         return _format(str(time)) + u"AM"
-
-# def _format(time):
-
-#     str_len = len(time)
-
-#     if str_len == 4:
-#         return time[:2] + u':' + time[2:]
-#     else:
-#         return time[:1] + u':' + time[1:]
-
-
-# def grad_courses(term_code):
-
-#     soup = BeautifulSoup(_grab_courselist_html(term_code))
-#     courses = _grab_raw_courses(soup)
-#     return courses
-
-
-if __name__ == '__main__':
-
-    parser = ArgumentParser()
-    parser.add_argument('-t', '--term-code',
-                        required=True,
-                        help='term code for semester you wish to get class info from '
-                             'can be found by inspecting <https://courselist.wm.edu/> source')
-
-    args = parser.parse_args()
-
-    print grab_courses(args.term_code)
-    # _get_text(args.term_code)
-    # main()

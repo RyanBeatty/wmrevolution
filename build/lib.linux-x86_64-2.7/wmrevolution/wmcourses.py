@@ -18,7 +18,7 @@ from .errors import BadRequestError
 
 COURSELIST_URL = 'https://courselist.wm.edu/courseinfo/searchresults'
 
- 
+
 def _get_text(term_code):
     payload = {
         "term_code": str(term_code),
