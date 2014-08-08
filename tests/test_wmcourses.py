@@ -15,7 +15,7 @@ class WMCoursesTestCase(unittest.TestCase):
 
     def test_bad_status_code(self):
         with self.assertRaises(errors.WMRevolutionError):
-            wmcourses._grab_courselist_html(10000000)
+            wmcourses._grab_html(10000000)
 
     def test_get_correct_course_fields(self):
         course_fields = [
@@ -35,7 +35,7 @@ class WMCoursesTestCase(unittest.TestCase):
         with open(self.test_file) as f:
             soup = BeautifulSoup(str(f.readlines()))
             self.assertEqual(
-                course_fields, wmcourses._grab_course_fields(soup))
+                course_fields, wmcourses._grab_fields(soup))
 
     def test_military_to_standard_bad_times(self):
         self.assertEqual(wmcourses.format_time(u'2400-2430'), u'2400-2430')

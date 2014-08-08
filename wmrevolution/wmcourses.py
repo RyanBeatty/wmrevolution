@@ -12,7 +12,15 @@ COURSELIST_URL = u'https://courselist.wm.edu/courseinfo/searchresults'
 
 
 def grab_courses(term_code, prettify=None):
-    soup = BeautifulSoup(_grab_courselist_html(term_code))
+    """
+    Scrapes w&m open course list and returns
+    list of courses contained in dictionaries.
+
+    PRETTIFY: function that takes and returns
+    a course and performs some data transformation
+    on the course dictionary
+    """
+    soup = BeautifulSoup(_grab_html(term_code))
     courses = _grab_raw_courses(soup)
     if prettify:
         courses = map(prettify, courses)
@@ -20,6 +28,11 @@ def grab_courses(term_code, prettify=None):
 
 
 def prettify(course):
+    """
+    Default course prettify function.
+    Converts a course's meet time from
+    military to standard time
+    """
     course_time_key = u'MEET TIMES'
     if course_time_key in course:
         course_time = course[course_time_key]
@@ -28,6 +41,10 @@ def prettify(course):
 
 
 def format_time(course_time):
+    """
+    Takes a military time (start_time-end_time) 
+    and converts to standard time (hh:mmAM/PM-hh:mmAM/PM)
+    """
 
     def _to_datetime(raw_time):
         return datetime.time(
@@ -39,10 +56,16 @@ def format_time(course_time):
         times = map(lambda t: t.strftime(u"%I:%M%p"), times)
         return u'-'.join(times)
     except ValueError:
+        # badly formated time. return original course_time
         return course_time
 
 
-def _grab_courselist_html(term_code):
+def _grab_html(term_code):
+    """
+    Returns wm open course list source html.
+    TERM_CODE: code for term you wish to get
+    course listing for (found by inspecting website)
+    """
     payload = {
         u"term_code": unicode(term_code),
         u"term_subj": u"0",
@@ -59,12 +82,19 @@ def _grab_courselist_html(term_code):
     return page.text
 
 
-def _grab_course_fields(soup):
+def _grab_fields(soup):
+    """
+    Return course fields in correct order
+    """
     return [field.string.strip() for field in soup.find_all(u'th')]
 
 
 def _grab_raw_courses(soup):
-    course_fields = _grab_course_fields(soup)
+    """
+    builds a list of dictionaries containing
+    the inner text of all of the courses
+    """
+    course_fields = _grab_fields(soup)
     courses = []
     course = {}
     count = 0
