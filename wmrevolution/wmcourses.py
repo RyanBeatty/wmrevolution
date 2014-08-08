@@ -1,5 +1,13 @@
 # -*- coding: <urf-8> -*-
 
+"""
+wmcourses.py
+by: Ryan Beatty
+
+module for scrapping William and Mary's open course
+list page and getting data for all courses. 
+"""
+
 import requests
 import datetime
 from argparse import ArgumentParser
