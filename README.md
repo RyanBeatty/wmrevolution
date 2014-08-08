@@ -21,3 +21,28 @@ term_code = '20151'
 course_list = wmcourses.grab_courses(term_code)
 ```
 
+This will give you a list of the courses, where each course is a dictionary containing that courses data.
+
+### Data Transformations
+There is also support for adding your own transformations to the course data while processing the courses. There is a built in method ```prettify``` that will convert all militarty course meetings times to standard time.
+
+```python
+from wmrevolution import wmcourses
+
+# this will convert all meeting times for each course
+# from military time (start_time-end_time) to 
+# standard time (hh:mmAM/PM-hh:mmAM/PM)
+course_list = wmcourses.grab_courses('201510', wmcourses.prettify)
+```
+
+Adding your own custom transformation is simple. Just define your own function that takes and returns a course dictionary and pass it to ```grab_courses```:
+
+```python
+from wmrevolution import wmcourses
+
+def my_transformation(course):
+	# complex transformation here
+	return course
+
+course_list = wmcourses.grab_courses('201510', my_transformation)
+```
