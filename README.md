@@ -32,6 +32,8 @@ from wmrevolution import wmcourses
 # this will convert all meeting times for each course
 # from military time (start_time-end_time) to 
 # standard time (hh:mmAM/PM-hh:mmAM/PM)
+#
+# ex. '1000-1452' -> '10:00AM-2:52PM'
 course_list = wmcourses.grab_courses('201510', wmcourses.prettify)
 ```
 
