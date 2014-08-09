@@ -82,8 +82,8 @@ def _grab_html(term_code):
         u"status": u"0"
     }
 
-    page = requests.post(COURSELIST_URL, data=payload)
     try:
+        page = requests.post(COURSELIST_URL, data=payload)
         page.raise_for_status()
     except requests.exceptions.HTTPError:
         raise BadRequestError(u"can't access course list. check term code")
@@ -94,7 +94,7 @@ def _grab_fields(soup):
     """
     Return course fields in correct order
     """
-    return [field.string.strip() for field in soup.find_all(u'th')]
+    return [field.text.strip() for field in soup.find_all(u'th')]
 
 
 def _grab_raw_courses(soup):
