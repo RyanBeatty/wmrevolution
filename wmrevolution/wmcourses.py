@@ -86,7 +86,9 @@ def _grab_html(term_code):
         page = requests.post(COURSELIST_URL, data=payload)
         page.raise_for_status()
     except requests.exceptions.HTTPError:
-        raise BadRequestError(u"can't access course list. check term code")
+        # http request to course list page failed
+        raise BadRequestError(
+            unicode(page.status_code) + u"can't access course list. check term code")
     return page.text
 
 
