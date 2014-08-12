@@ -7,7 +7,7 @@ from .errors import BadRequestError
 RMPROFESSOR_URL = u'http://www.ratemyprofessors.com/SelectTeacher.jsp?sid=269&pageNo='
 EVEN_PROFESSORS = u'entry even vertical-center'
 ODD_PROFESSORS = u'entry odd vertical-center'
-LAST_PAGE = 57
+LAST_PAGE = 58
 
 PROFESSOR_FIELDS = [
     u'profName',
