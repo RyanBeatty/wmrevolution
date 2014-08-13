@@ -1,168 +1,121 @@
-##########################################################################
-# wmcourselistscraper.py
-# written by: Ryan Beatty
-#
-# This is a python script that will scrape the William and Mary's open course list
-# for info and construct a dictionary for each course and print each dictionary
-# to standard output. Simple modifications can be made to upload each entry
-# to a database or write them to a file
-##########################################################################
+# -*- coding: <urf-8> -*-
 
+"""
+wmcourses.py
+by: Ryan Beatty
+
+module for scrapping William and Mary's open course
+list page and getting data for all courses. 
+"""
 
 import requests
+import datetime
 from argparse import ArgumentParser
 from lxml import html
 from bs4 import BeautifulSoup
 
 from .errors import BadRequestError
 
-COURSELIST_URL = 'https://courselist.wm.edu/courseinfo/searchresults'
+COURSELIST_URL = u'https://courselist.wm.edu/courseinfo/searchresults'
 
 
-def _get_text(term_code):
+def grab_courses(term_code, prettify=None):
+    """
+    Scrapes w&m open course list and returns
+    list of courses contained in dictionaries.
+
+    PRETTIFY: function that takes and returns
+    a course and performs some data transformation
+    on the course dictionary
+    """
+    soup = BeautifulSoup(_grab_html(term_code))
+    courses = _grab_raw_courses(soup)
+    if prettify:
+        courses = map(prettify, courses)
+    return courses
+
+
+def prettify(course):
+    """
+    Default course prettify function.
+    Converts a course's meet time from
+    military to standard time
+    """
+    course_time_key = u'MEET TIMES'
+    if course_time_key in course:
+        course_time = course[course_time_key]
+        course[course_time_key] = format_time(course_time)
+    return course
+
+
+def format_time(course_time):
+    """
+    Takes a military time (start_time-end_time) 
+    and converts to standard time (hh:mmAM/PM-hh:mmAM/PM)
+    """
+
+    def _to_datetime(raw_time):
+        return datetime.time(
+            hour=int(raw_time[0:2]), minute=int(raw_time[2:4]))
+
+    try:
+        times = course_time.split(u'-')
+        times = map(_to_datetime, times)
+        times = map(lambda t: t.strftime(u"%I:%M%p"), times)
+        return u'-'.join(times)
+    except ValueError:
+        # badly formated time. return original course_time
+        return course_time
+
+
+def _grab_html(term_code):
+    """
+    Returns wm open course list source html.
+    TERM_CODE: code for term you wish to get
+    course listing for (found by inspecting website)
+    """
     payload = {
-        "term_code": str(term_code),
-        "term_subj": "0",
-        "attr": "0",
-        "levl": "0",
-        "status": "0"
+        u"term_code": unicode(term_code),
+        u"term_subj": u"0",
+        u"attr": u"0",
+        u"levl": u"0",
+        u"status": u"0"
     }
 
-    page = requests.post(COURSELIST_URL, data=payload)
     try:
+        page = requests.post(COURSELIST_URL, data=payload)
         page.raise_for_status()
     except requests.exceptions.HTTPError:
-        raise BadRequestError("can't access course list. check term code")
+        # http request to course list page failed
+        raise BadRequestError(
+            unicode(page.status_code) + u"can't access course list. check term code")
     return page.text
 
 
-# from bson.objectid import ObjectId
-
-# dictionary used to get key field for each course
-key_dict = {
-    '0': 'CRN',
-    '1': 'ATTRIBUTE',
-    '2': 'COURSE_ID',
-    '3': 'TITLE',
-    '4': 'INSTRUCTOR',
-    '5': 'CREDIT_HOURS',
-    '6': 'DAYS',
-    '7': 'TIMES',
-    '8': 'PROJ_ENR',
-    '9': 'CUR_ENR',
-    '10': 'AVAILABLE',
-    '11': 'STATUS'
-}
-
-# returns the string key associated with each field in a course entry
-# index: int between [0,11] used to get correct string key
+def _grab_fields(soup):
+    """
+    Return course fields in correct order
+    """
+    return [field.text.strip() for field in soup.find_all(u'th')]
 
 
-def switch(index):
-    return key_dict[str(index)]
+def _grab_raw_courses(soup):
+    """
+    builds a list of dictionaries containing
+    the inner text of all of the courses
+    """
+    course_fields = _grab_fields(soup)
+    courses = []
+    course = {}
+    count = 0
 
-# converts militray time to standard time
-# time: time string formated in military time
+    for field in soup.find_all(u'td'):
+        if count == 12:
+            courses.append(course)
+            course = {}
+            count = 0
+        field_key = course_fields[count]
+        course[field_key] = field.text.strip()
+        count += 1
 
-
-def convert2Standard(time):
-
-    if time >= 1300:
-        return formatTime(str(time - 1200)) + "PM"
-    elif time >= 1200:
-        return formatTime(str(time)) + "PM"
-    else:
-        return formatTime(str(time)) + "AM"
-
-# formats the time field in each course entry
-
-
-def formatTime(time):
-
-    str_len = len(time)
-
-    if str_len == 4:
-        return time[:2] + ':' + time[2:]
-    else:
-        return time[:1] + ':' + time[1:]
-
-
-def main():
-
-    # form payload needed to access all courses
-    # payload = {
-    #   "term_code": "201510",
-    #   "term_subj": "0",
-    #   "attr": "0",
-    #   "levl": "0",
-    #   "status": "0"
-    # }
-
-    # submit form and construct BS parser from html
-    # page = requests.post(url, data=payload)
-    # data = page.text
-    soup = BeautifulSoup(_get_text(None))
-
-    print 'starting: \n'
-
-    field_count = 0         # used to keep track of current field
-    course_count = 0        # used to keep track of total number of courses
-    entry = {}              # used to store each courses' fields
-
-    # iterate over all entries in the open course list table
-    for link in soup.find_all('td'):
-
-        # strip the text of extraneous characters
-        text = link.getText().strip()
-
-        # if the text is not whitespace/newline/tab, process text
-        if not text.isspace():
-            # get entry key string
-            key = switch(field_count)
-
-            # if we are processing a courses' time info, convert time to
-            # standard time
-            if key is 'TIMES':
-                time = text.split('-', 2)
-
-                try:
-                    time_a = convert2Standard(int(time[0]))
-                    time_b = convert2Standard(int(time[1]))
-
-                    entry[key] = time_a + '-' + time_b
-                except ValueError:
-                    entry[key] = text
-
-            # else just add the text to the course dict
-            else:
-                entry[key] = text
-
-            field_count += 1
-
-        # if we have built a full course entry
-        if field_count == 12:
-            # print the entry (change to insert to a database)
-            print entry
-
-            # reset the current field count and entry and increment the course
-            # count
-            field_count = 0
-            course_count += 1
-            entry = {}
-
-    print 'number of courses: ' + str(course_count)
-    print 'done'
-
-
-if __name__ == '__main__':
-
-    parser = ArgumentParser()
-    parser.add_argument('-t', '--term-code',
-                        required=True,
-                        help='term code for semester you wish to get class info from '
-                             'can be found by inspecting <https://courselist.wm.edu/> source')
-
-    args = parser.parse_args()
-
-    _get_text(args.term_code)
-    # main()
+    return courses
