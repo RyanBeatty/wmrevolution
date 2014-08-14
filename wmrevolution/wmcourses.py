@@ -88,7 +88,7 @@ def _grab_html(term_code):
     except requests.exceptions.HTTPError:
         # http request to course list page failed
         raise BadRequestError(
-            unicode(page.status_code) + u"can't access course list. check term code")
+            u"status code: %s can't access course list. check term code" % page.status_code)
     return page.text
 
 
